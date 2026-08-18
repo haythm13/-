@@ -547,15 +547,32 @@
             }
         });
 
-        const newResultRef = database.ref('results').push();
-        newResultRef.set({
+        /*
+         * حفظ نتيجة واحدة فقط لكل فني في كل دورة.
+         * إعادة الاختبار تحدث نفس السجل بدل إنشاء نتيجة جديدة.
+         * النتيجة تبقى متاحة للمشرف لمدة ساعة من وقت التسليم.
+         */
+        const resultKey = btoa(unescape(encodeURIComponent(currentDiscordId + "_" + activeExamKey)))
+            .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+        const resultRef = database.ref('results/' + resultKey);
+        const submittedAt = Date.now();
+        const expiresAt = submittedAt + (60 * 60 * 1000);
+
+        resultRef.set({
             discordId: currentDiscordId,
             courseKey: activeExamKey,
             courseTitle: examData.title,
             score: score,
             maxScore: examData.questions.length,
-            timestamp: new Date().toLocaleString('ar-SA')
+            timestamp: new Date(submittedAt).toLocaleString('ar-SA'),
+            submittedAt: submittedAt,
+            expiresAt: expiresAt
         }).then(() => {
+            // حذف تلقائي بعد ساعة إذا كانت الصفحة مفتوحة.
+            setTimeout(() => {
+                resultRef.remove().catch(() => {});
+            }, 60 * 60 * 1000);
+
             document.getElementById('examCard').classList.add('hidden');
             document.getElementById('submittedCard').classList.remove('hidden');
         }).catch((err) => {
@@ -585,10 +602,45 @@
     }
 
     function listenToCloudResults() {
-        database.ref('results').on('value', (snapshot) => {
-            rawCloudData = snapshot.val();
-            renderCloudResults();
+        // تنظيف النتائج التي انتهت مدتها قبل عرضها للمشرف.
+        cleanupExpiredResults().then(() => {
+            database.ref('results').on('value', (snapshot) => {
+                const data = snapshot.val() || {};
+                const now = Date.now();
+                const validResults = {};
+
+                Object.keys(data).forEach((key) => {
+                    const item = data[key];
+
+                    // دعم السجلات القديمة التي لا تحتوي على expiresAt:
+                    // لا نحذفها مباشرة، لكن أي نتيجة جديدة ستكون لمدة ساعة.
+                    if (!item.expiresAt || item.expiresAt > now) {
+                        validResults[key] = item;
+                    } else {
+                        database.ref('results/' + key).remove().catch(() => {});
+                    }
+                });
+
+                rawCloudData = Object.keys(validResults).length ? validResults : null;
+                renderCloudResults();
+            });
         });
+    }
+
+    async function cleanupExpiredResults() {
+        const snapshot = await database.ref('results').once('value');
+        const data = snapshot.val() || {};
+        const now = Date.now();
+        const deletions = [];
+
+        Object.keys(data).forEach((key) => {
+            const item = data[key];
+            if (item && item.expiresAt && item.expiresAt <= now) {
+                deletions.push(database.ref('results/' + key).remove().catch(() => {}));
+            }
+        });
+
+        await Promise.all(deletions);
     }
 
     function renderCloudResults() {
@@ -618,6 +670,9 @@
         let grade07 = [];
 
         Object.values(rawCloudData).forEach((item) => {
+            // لا تعرض للمشرف أي نتيجة انتهت ساعتها.
+            if (item.expiresAt && item.expiresAt <= Date.now()) return;
+
             tableBody.innerHTML += `
                 <tr>
                     <td><@${item.discordId}></td>
