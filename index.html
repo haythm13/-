@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة اختبارات الورشة الميكانيكية</title>
+    
+    <!-- مكتبات Firebase الأساسية -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent-color: #00adb5;
+            --accent-hover: #008c93;
+            --text-color: #eeeeee;
+            --text-muted: #aaaaaa;
+            --danger-color: #ff2e63;
+            --success-color: #00b894;
+            --border-color: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 1.3rem;
+            color: var(--accent-color);
+        }
+
+        .nav-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-sm {
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        .btn-sm:hover {
+            background: var(--accent-color);
+            color: #fff;
+        }
+
+        .alert-box {
+            background-color: #2a2415;
+            border-right: 4px solid #ffb703;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .alert-box ul {
+            padding-right: 20px;
+            margin-top: 5px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="number"], input[type="password"], select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: #2a2a2a;
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-copy {
+            background-color: #27ae60;
+            margin-top: 10px;
+        }
+        .btn-copy:hover {
+            background-color: #219653;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            margin-top: 15px;
+        }
+        .btn-danger:hover {
+            background-color: #d6204c;
+        }
+
+        .btn-delete-row {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .question {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .question p {
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+            background: #252525;
+            padding: 10px 15px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .option:hover {
+            background: #333;
+        }
+
+        .option input {
+            margin-left: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 650px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .result-details {
+            background: #121212;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+            margin: 15px 0;
+            border: 1px solid var(--border-color);
+            direction: rtl;
+            text-align: right;
+            color: #2ed573;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .results-table th, .results-table td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .results-table th {
+            background-color: #252525;
+            color: var(--accent-color);
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .filter-select {
+            padding: 10px;
+            border-radius: 6px;
+            background: #252525;
+            color: white;
+            border: 1px solid var(--border-color);
+            flex: 2;
+        }
+
+        .filter-input {
+            padding: 10px;
+            border-radius: 6px;
+            background: #252525;
+            color: white;
+            border: 1px solid var(--border-color);
+            flex: 1;
+        }
+
+        .admin-inputs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>منصة اختبارات الورشة الميكانيكية</h1>
+        <div class="nav-btns">
+            <button class="btn-sm" onclick="openAdminPanel()">لوحة المشرف 🔒</button>
+            <button class="btn-sm" onclick="toggleModal('helpModal')">؟</button>
+        </div>
+    </header>
+
+    <div class="alert-box">
+        <strong>⚠️ تنبيهات هامّة للجميع:</strong>
+        <ul>
+            <li>تنبيه لجميع المختبرين: يجب وضع **اليوزر ايدي ديسكورد** الصحيح.</li>
+            <li>الالتزام بالاختبارات المحدثة لكل دورة.</li>
+            <li>يتم حفظ جميع النتائج في السحابة وتظهر فورياً لدى المشرفين.</li>
+        </ul>
+    </div>
+
+    <!-- واجهة دخول الفني -->
+    <div id="setupCard" class="card">
+        <h2 style="margin-bottom: 15px; color: var(--accent-color);">دخول الفني للحل</h2>
+        <div class="form-group">
+            <label for="discordId">معرف الديسكورد (Discord User ID) *</label>
+            <input type="text" id="discordId" placeholder="مثال: 1314708645153472633" required>
+        </div>
+        <div class="form-group">
+            <label for="courseSelect">اختر الدورة المحددة *</label>
+            <select id="courseSelect">
+                <option value="">-- اختر الدورة --</option>
+                <option value="field_guide">الموجه الميداني</option>
+                <option value="manufacturing">التصنيع</option>
+                <option value="modification">التعديل والتزويد</option>
+            </select>
+        </div>
+        <button class="btn" onclick="startExam()">بدء الاختبار</button>
+    </div>
+
+    <!-- واجهة تقديم الاختبار -->
+    <div id="examCard" class="card hidden">
+        <form id="quizForm">
+            <div id="questionsContainer"></div>
+            <button type="button" class="btn" onclick="submitExam()">إنهاء الاختبار وتأكيد إرسال الإجابات</button>
+        </form>
+    </div>
+
+    <!-- واجهة شكر للفني -->
+    <div id="submittedCard" class="card hidden" style="text-align: center;">
+        <h2 style="color: var(--success-color); margin-bottom: 10px;">✅ تم تسليم الإجابات بنجاح!</h2>
+        <p style="color: var(--text-muted);" id="userScoreDisplay">شكراً لك. تم تسجيل إجاباتك بنجاح في النظام وإرسالها للمشرفين.</p>
+        <button class="btn" style="margin-top: 20px;" onclick="resetToHome()">العودة للرئيسية</button>
+    </div>
+</div>
+
+<!-- نافذة دليل الاستخدام -->
+<div id="helpModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="toggleModal('helpModal')">&times;</span>
+        <h2 style="color: var(--accent-color); margin-bottom: 15px;">📖 دليل الاستخدام</h2>
+        <p><strong>الفني:</strong> أدخل معرف الديسكورد واحل الاختبار ثم اضغط إنهاء.</p>
+        <p style="margin-top:10px;"><strong>المشرف:</strong> تظهر نتائج جميع الفنيين من كافة الأجهزة في لوحة المشرف تلقائياً مع إمكانية تعديل أيدي الشارح والمسؤول والنائب ورقم الدورة قبل نسخ الكليشة.</p>
+    </div>
+</div>
+
+<!-- نافذة لوحة تحكم المشرف -->
+<div id="adminModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="toggleModal('adminModal')">&times;</span>
+        <h2 style="color: var(--accent-color); margin-bottom: 15px;">🔒 لوحة المشرف / النتائج السحابية</h2>
+        
+        <div id="adminAuth">
+            <div class="form-group">
+                <label>أدخل رمز الدخول للمشرفين:</label>
+                <input type="password" id="adminPass" placeholder="رمز الدخول">
+            </div>
+            <button class="btn" onclick="verifyAdmin()">دخول</button>
+        </div>
+
+        <div id="adminControls" class="hidden">
+            <label style="color: var(--accent-color); margin-bottom: 5px;">إعدادات الكليشة:</label>
+            <div class="filter-row">
+                <select id="adminFilterCourse" class="filter-select" onchange="renderCloudResults()">
+                    <option value="field_guide">الموجه الميداني</option>
+                    <option value="manufacturing">التصنيع</option>
+                    <option value="modification">التعديل والتزويد</option>
+                </select>
+                <input type="text" id="courseNumberInput" class="filter-input" placeholder="رقم الدورة" value="30" oninput="renderCloudResults()">
+            </div>
+
+            <div class="admin-inputs-grid">
+                <div>
+                    <label style="font-size: 0.85rem;">أيدي الشارح:</label>
+                    <input type="text" id="sharhInput" class="filter-input" placeholder="Discord ID الشارح" value="1443629044733182102" oninput="renderCloudResults()">
+                </div>
+                <div>
+                    <label style="font-size: 0.85rem;">أيدي مسؤول الدورة:</label>
+                    <input type="text" id="managerInput" class="filter-input" placeholder="Discord ID المسؤول" value="1027186761455124501" oninput="renderCloudResults()">
+                </div>
+                <div style="grid-column: span 2;">
+                    <label style="font-size: 0.85rem;">أيدي نائب مسؤول الدورة (اختياري):</label>
+                    <input type="text" id="deputyInput" class="filter-input" placeholder="Discord ID النائب" value="" oninput="renderCloudResults()">
+                </div>
+            </div>
+
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>الفني (Discord ID)</th>
+                        <th>الدورة</th>
+                        <th>النتيجة</th>
+                        <th>التاريخ</th>
+                        <th>حذف</th>
+                    </tr>
+                </thead>
+                <tbody id="adminResultsTable">
+                    <tr><td colspan="5">جاري تحميل البيانات...</td></tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 20px; color: var(--accent-color);">الكليشة الرسمية التلقائية (جاهزة للديسكورد):</h3>
+            <div id="adminOutput" class="result-details">لا توجد نتائج مسجلة حتى الآن.</div>
+            
+            <button class="btn btn-copy" onclick="copyCliche()">نسخ الكليشة بضغطة زر 📋</button>
+            <button class="btn btn-danger" onclick="clearCloudData()">مسح كافة النتائج من السحابة ⚠️</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCFdeQcvuGjLGYCstg77D-JyaJsLk1SRmI",
+        authDomain: "mica-54abc.firebaseapp.com",
+        databaseURL: "https://mica-54abc-default-rtdb.firebaseio.com",
+        projectId: "mica-54abc",
+        storageBucket: "mica-54abc.firebasestorage.app",
+        messagingSenderId: "1029107031750",
+        appId: "1:1029107031750:web:ee8e98a6342aefcb76c1c7",
+        measurementId: "G-BX23J3G4KX"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const database = firebase.database();
+
+    // تم التعديل لتكون الإجابة الصحيحة لكل الأسئلة هي الاختيار الأول (0) دائماً
+    const examsData = {
+        field_guide: {
+            title: "الموجه الميداني",
+            questions: [
+                { q: "من هو الموجه الميداني ؟", options: ["هو الشخص المسؤول عن توجيه الفنيين في الميدان بطريقة مناسبة.", "هو الشخص المسؤول عن كتابة التقرير في نهاية كل ساعة.", "هو الشخص المسؤول عن استقبال رسائل واتصالات الجوال وتمريرها للفنيين والمشرفين بالشكل الصحيح."], a: 0 },
+                { q: "من هو نائب الموجه الميداني ؟", options: ["هو الشخص المسؤول عن كتابة التقرير في نهاية كل ساعة.", "هو الشخص المسؤول عن توجيه الفنيين في الميدان بطريقة مناسبة.", "هو الشخص المسؤول عن استقبال رسائل واتصالات الجوال وتمريرها للفنيين والمشرفين بالشكل الصحيح."], a: 0 },
+                { q: "من هو مركز الاتصالات ؟", options: ["هو الشخص المسؤول عن استقبال رسائل واتصالات الجوال وتمريرها للفنيين والمشرفين بالشكل الصحيح.", "هو الشخص المسؤول عن كتابة التقرير في نهاية كل ساعة.", "هو الشخص المسؤول عن توجيه الفنيين في الميدان بطريقة مناسبة."], a: 0 },
+                { q: "من مهام الموجه الميداني ؟", options: ["توجيه الوحدات داخل روم العمليات", "كتابة التقارير", "استلام بلاغات الجوال", "استلام البلاغات عبر الراديو"], a: 0 },
+                { q: "من مهام نائب الموجه الميداني ؟", options: ["كتابة التقرير الميداني", "التغيب عن الروم و التركيز في الراديو", "المباشرة في بوليتو", "استلام بلاغات التعديل و التزويد"], a: 0 },
+                { q: "من مهام مركز الاتصالات ؟", options: ["استقبال الاتصالات و تمريرها عبر الراديو", "استقبال البلاغات عبر الموجه", "اهمال الاتصالات عبر الهاتف", "كتابة التقرير و تسجيل الوحدات"], a: 0 },
+                { q: "في حال وجود 6 وحدات بالميدان ماهي طريقة التوزيع ؟", options: ["2 لوس . 2 ساندي . 2 بوليتو", "3 لوس . 2 ساندي . 1 بوليتو", "3 لوس . 1 ساندي . 2 بوليتو", "1 لوس . 3 ساندي . 2 بوليتو"], a: 0 },
+                { q: "أولوية تمرير بلاغات التعديل و التزويد:", options: ["اشراف منطقة . العمليات او النائب . الموجه الميداني", "اشراف عام . اشراف منطقة . الموجة الميداني", "القيادة . اشراف عام . اشراف منطقة", "اشراف منطقة . اشراف عام . القيادة"], a: 0 },
+                { q: "أولوية تمرير بلاغات فني ميناء:", options: ["اشراف منطقة . العمليات او النائب . الموجه الميداني", "اشراف عام . اشراف منطقة . الموجة الميداني", "اشراف منطقة . اشراف عام . الموجة الميداني", "العمليات . اشراف منطقة . اشراف عام"], a: 0 },
+                { q: "ما هو التصرف الصحيح في حال تم اعطائك (❌) على تقريرك ؟", options: ["تعديل الخطأ وإعلامه برسالة \"تم التعديل\" في روم ملاحظات التقارير", "تجاهل الخطأ", "حذف التقرير", "تعديل الخطأ بدون إعلامه في روم ملاحظات التقارير"], a: 0 }
+            ]
+        },
+        manufacturing: {
+            title: "التصنيع",
+            questions: [
+                { q: "من قوانين التصنيع ؟", options: ["ان يكون الفني متقدم عبر الرابط المرسل", "ان يكون الفني مستوى 5 بالميكانيك", "ان يكون مستوى الفني +65بالمدينة"], a: 0 },
+                { q: "من محظورات دورة التصنيع ؟", options: ["تصنيع اكثر من 100 صندوق", "الاكل و الشرب اثناء التصنيع", "جلب الحديد للموقع"], a: 0 },
+                { q: "ما هو الهدف من التصنيع ؟", options: ["توفير العدد للتجار لتوفيرها بالمتاجر للعامة", "كسب المال", "التوجه للحالات الجنائية", "إبلاغ العمليات عن رصد حاله جنائية"], a: 0 },
+                { q: "من شروط التصنيع ؟", options: ["التقديم عبر الرابط المرسل", "ان أكون مستوى 1", "ح حاصل على جميع الدورات"], a: 0 },
+                { q: "كم الحديد المطلوب ل تصنيع 100 صندوق ؟", options: ["2500 حديدة", "2550 حديدة", "1500 حديدة", "2000 حديدة"], a: 0 },
+                { q: "كم سعر شراء قطعة الحديد الواحدة ؟", options: ["250 - 450", "200- 400", "300 - 400", "350 - 450"], a: 0 },
+                { q: "ماهي الطريقة الصحيحة لشراء الحديد ؟", options: ["عبر روم بيع-الحديد-للميكانيك", "عبر الخاص", "عبر روم رسائل الميكانيك"], a: 0 },
+                { q: "يسمح بالتصنيع للمصلحة الشخصية ؟", options: ["خطأ", "صح"], a: 0 },
+                { q: "م مواقع التصنيع المعتمدة:", options: ["مركز SRT مربع 2015", "مركز بوليتو 907", "مركز لوس 7032"], a: 0 },
+                { q: "شراء الحديد يتم توثيقه بالفاتورة ؟", options: ["صح", "خطأ"], a: 0 }
+            ]
+        },
+        modification: {
+            title: "التعديل والتزويد",
+            questions: [
+                { q: "من قوانين التعديل التزويد:", options: ["احتساب تكلفة الإكسترا بقيمة 10 k للقطعة الواحدة و يتم استقطاع المبلغ عبر الفاتورة", "تركيب بوري الشرطة على سيارات المواطنين", "تعديل المركبة الشخصية بنفسك", "طلب هوية العميل و التأكد من ملكية المركبة قبل العمل عليها"], a: 0 },
+                { q: "متطلبات افتتاح كراج التعديل و التزويد:", options: ["تواجد إدارة كراج الميكانيك او تصريح للتعديل و التزويد", "تواجد 3 وحدات حاصله على دورة التعديل و التزويد", "ان يكون عدد الاشخاص داخل المقاطعة + 350"], a: 0 },
+                { q: "متى يتم ارسال تقرير توزيع المسارات ؟", options: ["قبل الافتتاح", "بعد الافتتاح"], a: 0 },
+                { q: "يمنع الذهاب إلى مسؤول التقرير و طلب تغيير المسار ؟", options: ["صح", "خطأ"], a: 0 },
+                { q: "يجب ان يكون مسؤول التقرير اعلى رتبة بين المهندسين ؟", options: ["خطأ", "صح"], a: 0 },
+                { q: "محظورات التعديل و التزويد:", options: ["تعديل المركبة في مكان غير مخصص", "التأكد من هوية العميل", "إعطاء فاتورة في حال تم تعديل إكسترا", "إخفاء المراوح من الهيليكوبتر"], a: 0 },
+                { q: "بعد تعديل الإكسترا يجب تثبيت اللوحة ؟", options: ["صح", "خطأ"], a: 0 },
+                { q: "هل يحق تعديل مركبات المواطنين بدون ترخيص ؟", options: ["لا", "نعم"], a: 0 },
+                { q: "هل يحق لغير حاملي الدورة تعديل التزويد ؟", options: ["لا", "نعم"], a: 0 },
+                { q: "مكان التعديل الرسمي يكون داخل الكراج المخصص فقط ؟", options: ["صح", "خطأ"], a: 0 }
+            ]
+        }
+    };
+
+    let activeExamKey = "";
+    let rawCloudData = null;
+
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
+        modal.style.display = (modal.style.display === "flex") ? "none" : "flex";
+    }
+
+    function startExam() {
+        const discordInput = document.getElementById('discordId').value.trim();
+        const courseSelect = document.getElementById('courseSelect').value;
+
+        if (!discordInput) {
+            alert("يرجى إدخال معرف الديسكورد (Discord User ID) أولاً.");
+            return;
+        }
+
+        if (!courseSelect) {
+            alert("يرجى اختيار الدورة المحددة.");
+            return;
+        }
+
+        activeExamKey = courseSelect;
+        const examData = examsData[activeExamKey];
+
+        const container = document.getElementById('questionsContainer');
+        container.innerHTML = `<h2 style="margin-bottom: 20px; color: var(--accent-color);">اختبار دورة: ${examData.title}</h2>`;
+
+        examData.questions.forEach((q, index) => {
+            let qHtml = `<div class="question"><p>${index + 1}. ${q.q}</p>`;
+            q.options.forEach((opt, optIdx) => {
+                const inputName = `q_${index}`;
+                qHtml += `
+                    <label class="option">
+                        <input type="radio" name="${inputName}" value="${optIdx}">
+                        ${opt}
+                    </label>
+                `;
+            });
+            qHtml += `</div>`;
+            container.innerHTML += qHtml;
+        });
+
+        document.getElementById('setupCard').classList.add('hidden');
+        document.getElementById('examCard').classList.remove('hidden');
+    }
+
+    function submitExam() {
+        const currentDiscordId = document.getElementById('discordId').value.trim();
+        const examData = examsData[activeExamKey];
+        let score = 0;
+
+        examData.questions.forEach((q, index) => {
+            const inputs = document.querySelectorAll(`input[name="q_${index}"]:checked`);
+            if (inputs.length > 0) {
+                const selectedVal = parseInt(inputs[0].value);
+                if (selectedVal === q.a) {
+                    score++;
+                }
+            }
+        });
+
+        const newResultRef = database.ref('results').push();
+        newResultRef.set({
+            discordId: currentDiscordId,
+            courseKey: activeExamKey,
+            courseTitle: examData.title,
+            score: score,
+            maxScore: examData.questions.length,
+            timestamp: new Date().toLocaleString('ar-SA')
+        }).then(() => {
+            document.getElementById('userScoreDisplay').innerText = `تم تسجيل إجاباتك بنجاح! النتيجة المحصلة: (${score} / ${examData.questions.length})`;
+            document.getElementById('examCard').classList.add('hidden');
+            document.getElementById('submittedCard').classList.remove('hidden');
+        }).catch((err) => {
+            alert("حدث خطأ في الاتصال بالسحابة: " + err.message);
+        });
+    }
+
+    function resetToHome() {
+        document.getElementById('submittedCard').classList.add('hidden');
+        document.getElementById('setupCard').classList.remove('hidden');
+        document.getElementById('discordId').value = "";
+    }
+
+    function openAdminPanel() {
+        toggleModal('adminModal');
+    }
+
+    function verifyAdmin() {
+        const pass = document.getElementById('adminPass').value;
+        if (pass === "8989") { 
+            document.getElementById('adminAuth').classList.add('hidden');
+            document.getElementById('adminControls').classList.remove('hidden');
+            listenToCloudResults();
+        } else {
+            alert("كلمة المرور خاطئة!");
+        }
+    }
+
+    function listenToCloudResults() {
+        database.ref('results').on('value', (snapshot) => {
+            rawCloudData = snapshot.val();
+            renderCloudResults();
+        });
+    }
+
+    function deleteSingleResult(key) {
+        if (confirm("هل تريد حذف هذا السجل بالتحديد؟")) {
+            database.ref('results/' + key).remove();
+        }
+    }
+
+    function renderCloudResults() {
+        const tableBody = document.getElementById('adminResultsTable');
+        const outputDiv = document.getElementById('adminOutput');
+        const selectedCourseKey = document.getElementById('adminFilterCourse').value;
+        const courseNum = document.getElementById('courseNumberInput').value.trim() || "1";
+        
+        const sharhId = document.getElementById('sharhInput').value.trim();
+        const managerId = document.getElementById('managerInput').value.trim();
+        const deputyId = document.getElementById('deputyInput').value.trim();
+
+        const currentExamData = examsData[selectedCourseKey];
+
+        if (!rawCloudData) {
+            tableBody.innerHTML = `<tr><td colspan="5">لا توجد نتائج مسجلة حتى الآن.</td></tr>`;
+            outputDiv.innerText = "لا توجد نتائج مسجلة حتى الآن.";
+            return;
+        }
+
+        tableBody.innerHTML = "";
+
+        let grade10 = [];
+        let grade09 = [];
+        let grade08 = [];
+        let grade07 = [];
+
+        Object.entries(rawCloudData).forEach(([key, item]) => {
+            const isMatch = (item.courseKey === selectedCourseKey) || 
+                            (item.courseTitle && item.courseTitle.includes(currentExamData.title)) ||
+                            (item.courseTitle && currentExamData.title.includes(item.courseTitle)) ||
+                            (selectedCourseKey === "field_guide" && (item.courseKey === "field_guide" || (item.courseTitle && item.courseTitle.includes("الموجه"))));
+
+            if (isMatch) {
+                tableBody.innerHTML += `
+                    <tr>
+                        <td><@${item.discordId}></td>
+                        <td>${item.courseTitle}</td>
+                        <td>${item.score} / ${item.maxScore}</td>
+                        <td>${item.timestamp}</td>
+                        <td><button class="btn-delete-row" onclick="deleteSingleResult('${key}')">مسح</button></td>
+                    </tr>
+                `;
+
+                const mention = `<@${item.discordId}>`;
+                const userScore = Number(item.score);
+
+                if (userScore === 10) grade10.push(mention);
+                else if (userScore === 9) grade09.push(mention);
+                else if (userScore === 8) grade08.push(mention);
+                else if (userScore === 7) grade07.push(mention);
+            }
+        });
+
+        const str10 = grade10.length > 0 ? grade10.join(" , ") : "لا يوجد";
+        const str09 = grade09.length > 0 ? grade09.join(" , ") : "لا يوجد";
+        const str08 = grade08.length > 0 ? grade08.join(" , ") : "لا يوجد";
+        const str07 = grade07.length > 0 ? grade07.join(" , ") : "لا يوجد";
+
+        const sharhMention = sharhId ? `<@${sharhId}>` : "";
+        const managerMention = managerId ? `<@${managerId}>` : "";
+        const deputyMention = deputyId ? `<@${deputyId}>` : "";
+
+        let clicheText = `***﷽***
+
+***اما بعد ..***
+
+***رصد درجات الناجحين في دورة *** 
+***\`\`\` اسم الدورة ( ${currentExamData.title} ) (${courseNum})\`\`\`***
+
+***10 / 10 ***
+
+
+(   ${str10}   )
+
+
+
+***10 / 09 ***
+
+
+(   ${str09}   )
+
+
+
+***10 / 08 ***
+
+
+(   ${str08}   )
+
+
+
+***10 / 07 ***
+
+
+(   ${str07}   )
+
+
+
+
+---------------------------------------------------------------------------------------
+
+
+***شرح :  ${sharhMention}       *** 
+
+*** مسؤول الدورة  : ${managerMention}      ***
+
+*** نائب مسؤول الدورة  : ${deputyMention}        *** 
+
+***التوقيع واعتماد :  ( ${managerMention}     )   ***
+
+***نسخة الى/ <@&1404535896304259072> ***
+***للمتابعة والتنفيذ :  <@&1404535896044343488>  ***
+***للعلم و الاحاطة :  <@&1404535897487179858>    ***`;
+
+        outputDiv.innerText = clicheText;
+    }
+
+    function copyCliche() {
+        const text = document.getElementById('adminOutput').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            alert("✅ تم نسخ الكليشة بنجاح! يمكنك لصقها الآن بـ ديسكورد.");
+        });
+    }
+
+    function clearCloudData() {
+        if (confirm("هل أنت تأكد من مسح جميع نتائج الفنيين من السحابة؟")) {
+            database.ref('results').remove().then(() => {
+                alert("تم مسح السجلات بنجاح.");
+            });
+        }
+    }
+</script>
+
+</body>
+</html>
