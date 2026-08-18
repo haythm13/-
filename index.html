@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>منصة اختبارات الورشة الميكانيكية</title>
-    
-    <!-- مكتبات Firebase الأساسية -->
+
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -19,6 +21,7 @@
             --text-muted: #aaaaaa;
             --danger-color: #ff2e63;
             --success-color: #00b894;
+            --warning-color: #ffb703;
             --border-color: #333333;
         }
 
@@ -26,7 +29,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
@@ -37,7 +40,7 @@
         }
 
         .container {
-            max-width: 850px;
+            max-width: 900px;
             margin: 0 auto;
         }
 
@@ -50,6 +53,7 @@
             border-radius: 12px;
             border: 1px solid var(--border-color);
             margin-bottom: 20px;
+            gap: 15px;
         }
 
         header h1 {
@@ -80,7 +84,7 @@
 
         .alert-box {
             background-color: #2a2415;
-            border-right: 4px solid #ffb703;
+            border-right: 4px solid var(--warning-color);
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
@@ -110,7 +114,10 @@
             font-weight: bold;
         }
 
-        input[type="text"], input[type="number"], input[type="password"], select {
+        input[type="text"],
+        input[type="number"],
+        input[type="password"],
+        select {
             width: 100%;
             padding: 12px;
             border-radius: 8px;
@@ -120,7 +127,8 @@
             font-size: 1rem;
         }
 
-        input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus, select:focus {
+        input:focus,
+        select:focus {
             outline: none;
             border-color: var(--accent-color);
         }
@@ -142,10 +150,16 @@
             background-color: var(--accent-hover);
         }
 
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .btn-copy {
             background-color: #27ae60;
             margin-top: 10px;
         }
+
         .btn-copy:hover {
             background-color: #219653;
         }
@@ -154,29 +168,32 @@
             background-color: var(--danger-color);
             margin-top: 15px;
         }
+
         .btn-danger:hover {
             background-color: #d6204c;
         }
 
-        .btn-delete-row {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.8rem;
+        .btn-refresh {
+            background-color: #34495e;
+            margin-top: 10px;
         }
 
         .question {
             margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
+            padding: 18px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: #191919;
         }
 
         .question p {
             font-weight: bold;
             margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .question-number {
+            color: var(--accent-color);
         }
 
         .option {
@@ -185,7 +202,7 @@
             margin-bottom: 10px;
             cursor: pointer;
             background: #252525;
-            padding: 10px 15px;
+            padding: 11px 15px;
             border-radius: 6px;
             transition: 0.2s;
         }
@@ -196,26 +213,45 @@
 
         .option input {
             margin-left: 10px;
+            transform: scale(1.15);
+        }
+
+        .question.unanswered {
+            border: 1px solid var(--danger-color);
+        }
+
+        .unanswered-message {
+            color: #ff6b81;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .question.unanswered .unanswered-message {
+            display: block;
         }
 
         .modal {
             display: none;
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(0, 0, 0, 0.85);
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            padding: 20px;
         }
 
         .modal-content {
             background: var(--card-bg);
             padding: 25px;
             border-radius: 12px;
-            max-width: 650px;
-            width: 90%;
-            max-height: 85vh;
+            max-width: 750px;
+            width: 100%;
+            max-height: 90vh;
             overflow-y: auto;
             border: 1px solid var(--border-color);
             position: relative;
@@ -223,10 +259,10 @@
 
         .modal-close {
             position: absolute;
-            top: 15px;
+            top: 10px;
             left: 15px;
             cursor: pointer;
-            font-size: 1.5rem;
+            font-size: 1.7rem;
             color: var(--text-muted);
         }
 
@@ -234,7 +270,7 @@
             background: #121212;
             padding: 15px;
             border-radius: 6px;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: "Courier New", Courier, monospace;
             font-size: 0.95rem;
             white-space: pre-wrap;
             margin: 15px 0;
@@ -242,15 +278,22 @@
             direction: rtl;
             text-align: right;
             color: #2ed573;
+            overflow-x: auto;
+        }
+
+        .results-table-wrapper {
+            overflow-x: auto;
         }
 
         .results-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
+            min-width: 600px;
         }
 
-        .results-table th, .results-table td {
+        .results-table th,
+        .results-table td {
             border: 1px solid var(--border-color);
             padding: 10px;
             text-align: center;
@@ -262,27 +305,46 @@
             color: var(--accent-color);
         }
 
+        .grade-10 {
+            color: #00ff9d;
+            font-weight: bold;
+        }
+
+        .grade-09 {
+            color: #7bed9f;
+            font-weight: bold;
+        }
+
+        .grade-08 {
+            color: #70a1ff;
+            font-weight: bold;
+        }
+
+        .grade-07 {
+            color: #ffa502;
+            font-weight: bold;
+        }
+
         .filter-row {
             display: flex;
             gap: 10px;
             margin-bottom: 10px;
         }
 
-        .filter-select {
-            padding: 10px;
-            border-radius: 6px;
-            background: #252525;
-            color: white;
-            border: 1px solid var(--border-color);
-            flex: 2;
-        }
-
+        .filter-select,
         .filter-input {
             padding: 10px;
             border-radius: 6px;
             background: #252525;
             color: white;
             border: 1px solid var(--border-color);
+        }
+
+        .filter-select {
+            flex: 2;
+        }
+
+        .filter-input {
             flex: 1;
         }
 
@@ -293,38 +355,120 @@
             margin-bottom: 15px;
         }
 
-        .hidden { display: none; }
+        .hidden {
+            display: none !important;
+        }
+
+        .success-box {
+            background: rgba(0, 184, 148, 0.12);
+            border: 1px solid var(--success-color);
+            color: #55efc4;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .score-big {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin: 15px 0;
+        }
+
+        .empty-row {
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 650px) {
+            body {
+                padding: 10px;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .nav-btns {
+                width: 100%;
+            }
+
+            .btn-sm {
+                flex: 1;
+            }
+
+            .admin-inputs-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-inputs-grid > div {
+                grid-column: span 1 !important;
+            }
+
+            .filter-row {
+                flex-direction: column;
+            }
+
+            .card {
+                padding: 18px;
+            }
+        }
     </style>
 </head>
+
 <body>
 
 <div class="container">
+
     <header>
         <h1>منصة اختبارات الورشة الميكانيكية</h1>
+
         <div class="nav-btns">
-            <button class="btn-sm" onclick="openAdminPanel()">لوحة المشرف 🔒</button>
-            <button class="btn-sm" onclick="toggleModal('helpModal')">؟</button>
+            <button class="btn-sm" onclick="openAdminPanel()">
+                لوحة المشرف 🔒
+            </button>
+
+            <button class="btn-sm" onclick="toggleModal('helpModal')">
+                ؟
+            </button>
         </div>
     </header>
 
     <div class="alert-box">
         <strong>⚠️ تنبيهات هامّة للجميع:</strong>
+
         <ul>
-            <li>تنبيه لجميع المختبرين: يجب وضع **اليوزر ايدي ديسكورد** الصحيح.</li>
+            <li>تنبيه لجميع المختبرين: يجب وضع <strong>اليوزر ايدي ديسكورد</strong> الصحيح.</li>
             <li>الالتزام بالاختبارات المحدثة لكل دورة.</li>
             <li>يتم حفظ جميع النتائج في السحابة وتظهر فورياً لدى المشرفين.</li>
         </ul>
     </div>
 
-    <!-- واجهة دخول الفني -->
+    <!-- دخول الفني -->
     <div id="setupCard" class="card">
-        <h2 style="margin-bottom: 15px; color: var(--accent-color);">دخول الفني للحل</h2>
+
+        <h2 style="margin-bottom:15px;color:var(--accent-color);">
+            دخول الفني للحل
+        </h2>
+
         <div class="form-group">
-            <label for="discordId">معرف الديسكورد (Discord User ID) *</label>
-            <input type="text" id="discordId" placeholder="مثال: 1314708645153472633" required>
+            <label for="discordId">
+                معرف الديسكورد (Discord User ID) *
+            </label>
+
+            <input
+                type="text"
+                id="discordId"
+                placeholder="مثال: 1314708645153472633"
+                autocomplete="off"
+            >
         </div>
+
         <div class="form-group">
-            <label for="courseSelect">اختر الدورة المحددة *</label>
+            <label for="courseSelect">
+                اختر الدورة المحددة *
+            </label>
+
             <select id="courseSelect">
                 <option value="">-- اختر الدورة --</option>
                 <option value="field_guide">الموجه الميداني</option>
@@ -332,100 +476,305 @@
                 <option value="modification">التعديل والتزويد</option>
             </select>
         </div>
-        <button class="btn" onclick="startExam()">بدء الاختبار</button>
+
+        <button class="btn" onclick="startExam()">
+            بدء الاختبار
+        </button>
+
     </div>
 
-    <!-- واجهة تقديم الاختبار -->
+    <!-- الاختبار -->
     <div id="examCard" class="card hidden">
+
         <form id="quizForm">
+
             <div id="questionsContainer"></div>
-            <button type="button" class="btn" onclick="submitExam()">إنهاء الاختبار وتأكيد إرسال الإجابات</button>
+
+            <button
+                type="button"
+                id="submitExamBtn"
+                class="btn"
+                onclick="submitExam()"
+            >
+                إنهاء الاختبار وتأكيد إرسال الإجابات
+            </button>
+
         </form>
+
     </div>
 
-    <!-- واجهة شكر للفني -->
-    <div id="submittedCard" class="card hidden" style="text-align: center;">
-        <h2 style="color: var(--success-color); margin-bottom: 10px;">✅ تم تسليم الإجابات بنجاح!</h2>
-        <p style="color: var(--text-muted);" id="userScoreDisplay">شكراً لك. تم تسجيل إجاباتك بنجاح في النظام وإرسالها للمشرفين.</p>
-        <button class="btn" style="margin-top: 20px;" onclick="resetToHome()">العودة للرئيسية</button>
+    <!-- بعد التسليم -->
+    <div id="submittedCard" class="card hidden" style="text-align:center;">
+
+        <h2 style="color:var(--success-color);margin-bottom:10px;">
+            ✅ تم تسليم الإجابات بنجاح!
+        </h2>
+
+        <p style="color:var(--text-muted);">
+            تم تسجيل إجاباتك بنجاح في النظام وإرسالها للمشرفين.
+        </p>
+
+        <div id="finalScore" class="score-big"></div>
+
+        <button
+            class="btn"
+            style="margin-top:20px;"
+            onclick="resetToHome()"
+        >
+            العودة للرئيسية
+        </button>
+
     </div>
+
 </div>
 
-<!-- نافذة دليل الاستخدام -->
+
+<!-- دليل الاستخدام -->
 <div id="helpModal" class="modal">
+
     <div class="modal-content">
-        <span class="modal-close" onclick="toggleModal('helpModal')">&times;</span>
-        <h2 style="color: var(--accent-color); margin-bottom: 15px;">📖 دليل الاستخدام</h2>
-        <p><strong>الفني:</strong> أدخل معرف الديسكورد واحل الاختبار ثم اضغط إنهاء.</p>
-        <p style="margin-top:10px;"><strong>المشرف:</strong> تظهر نتائج جميع الفنيين من كافة الأجهزة في لوحة المشرف تلقائياً مع إمكانية تعديل أيدي الشارح والمسؤول والنائب ورقم الدورة قبل نسخ الكليشة.</p>
+
+        <span
+            class="modal-close"
+            onclick="toggleModal('helpModal')"
+        >
+            &times;
+        </span>
+
+        <h2 style="color:var(--accent-color);margin-bottom:15px;">
+            📖 دليل الاستخدام
+        </h2>
+
+        <p>
+            <strong>الفني:</strong>
+            أدخل معرف الديسكورد واختر الدورة ثم حل جميع الأسئلة واضغط إنهاء.
+        </p>
+
+        <p style="margin-top:10px;">
+            <strong>المشرف:</strong>
+            تظهر نتائج جميع الفنيين من كافة الأجهزة في لوحة المشرف تلقائياً.
+        </p>
+
+        <p style="margin-top:10px;">
+            يمكن للمشرف تعديل رقم الدورة وأيدي الشارح والمسؤول والنائب
+            قبل نسخ الكليشة.
+        </p>
+
     </div>
+
 </div>
 
-<!-- نافذة لوحة تحكم المشرف -->
+
+<!-- لوحة المشرف -->
 <div id="adminModal" class="modal">
+
     <div class="modal-content">
-        <span class="modal-close" onclick="toggleModal('adminModal')">&times;</span>
-        <h2 style="color: var(--accent-color); margin-bottom: 15px;">🔒 لوحة المشرف / النتائج السحابية</h2>
-        
+
+        <span
+            class="modal-close"
+            onclick="toggleModal('adminModal')"
+        >
+            &times;
+        </span>
+
+        <h2 style="color:var(--accent-color);margin-bottom:15px;">
+            🔒 لوحة المشرف / النتائج السحابية
+        </h2>
+
+        <!-- تسجيل دخول المشرف -->
         <div id="adminAuth">
+
             <div class="form-group">
-                <label>أدخل رمز الدخول للمشرفين:</label>
-                <input type="password" id="adminPass" placeholder="رمز الدخول">
+
+                <label>
+                    أدخل رمز الدخول للمشرفين:
+                </label>
+
+                <input
+                    type="password"
+                    id="adminPass"
+                    placeholder="رمز الدخول"
+                >
+
             </div>
-            <button class="btn" onclick="verifyAdmin()">دخول</button>
+
+            <button
+                class="btn"
+                onclick="verifyAdmin()"
+            >
+                دخول
+            </button>
+
         </div>
 
+
+        <!-- تحكم المشرف -->
         <div id="adminControls" class="hidden">
-            <label style="color: var(--accent-color); margin-bottom: 5px;">إعدادات الكليشة:</label>
+
+            <label style="color:var(--accent-color);margin-bottom:5px;">
+                إعدادات الكليشة:
+            </label>
+
             <div class="filter-row">
-                <select id="adminFilterCourse" class="filter-select" onchange="renderCloudResults()">
-                    <option value="field_guide">الموجه الميداني</option>
-                    <option value="manufacturing">التصنيع</option>
-                    <option value="modification">التعديل والتزويد</option>
+
+                <select
+                    id="adminFilterCourse"
+                    class="filter-select"
+                    onchange="renderCloudResults()"
+                >
+                    <option value="field_guide">
+                        الموجه الميداني
+                    </option>
+
+                    <option value="manufacturing">
+                        التصنيع
+                    </option>
+
+                    <option value="modification">
+                        التعديل والتزويد
+                    </option>
                 </select>
-                <input type="text" id="courseNumberInput" class="filter-input" placeholder="رقم الدورة" value="30" oninput="renderCloudResults()">
+
+                <input
+                    type="text"
+                    id="courseNumberInput"
+                    class="filter-input"
+                    placeholder="رقم الدورة"
+                    value="30"
+                    oninput="renderCloudResults()"
+                >
+
             </div>
+
 
             <div class="admin-inputs-grid">
+
                 <div>
-                    <label style="font-size: 0.85rem;">أيدي الشارح:</label>
-                    <input type="text" id="sharhInput" class="filter-input" placeholder="Discord ID الشارح" value="1443629044733182102" oninput="renderCloudResults()">
+                    <label style="font-size:.85rem;">
+                        أيدي الشارح:
+                    </label>
+
+                    <input
+                        type="text"
+                        id="sharhInput"
+                        class="filter-input"
+                        placeholder="Discord ID الشارح"
+                        value="1443629044733182102"
+                        oninput="renderCloudResults()"
+                    >
                 </div>
+
+
                 <div>
-                    <label style="font-size: 0.85rem;">أيدي مسؤول الدورة:</label>
-                    <input type="text" id="managerInput" class="filter-input" placeholder="Discord ID المسؤول" value="1027186761455124501" oninput="renderCloudResults()">
+                    <label style="font-size:.85rem;">
+                        أيدي مسؤول الدورة:
+                    </label>
+
+                    <input
+                        type="text"
+                        id="managerInput"
+                        class="filter-input"
+                        placeholder="Discord ID المسؤول"
+                        value="1027186761455124501"
+                        oninput="renderCloudResults()"
+                    >
                 </div>
-                <div style="grid-column: span 2;">
-                    <label style="font-size: 0.85rem;">أيدي نائب مسؤول الدورة (اختياري):</label>
-                    <input type="text" id="deputyInput" class="filter-input" placeholder="Discord ID النائب" value="" oninput="renderCloudResults()">
+
+
+                <div style="grid-column:span 2;">
+
+                    <label style="font-size:.85rem;">
+                        أيدي نائب مسؤول الدورة (اختياري):
+                    </label>
+
+                    <input
+                        type="text"
+                        id="deputyInput"
+                        class="filter-input"
+                        placeholder="Discord ID النائب"
+                        value=""
+                        oninput="renderCloudResults()"
+                    >
+
                 </div>
+
             </div>
 
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th>الفني (Discord ID)</th>
-                        <th>الدورة</th>
-                        <th>النتيجة</th>
-                        <th>التاريخ</th>
-                        <th>حذف</th>
-                    </tr>
-                </thead>
-                <tbody id="adminResultsTable">
-                    <tr><td colspan="5">جاري تحميل البيانات...</td></tr>
-                </tbody>
-            </table>
 
-            <h3 style="margin-top: 20px; color: var(--accent-color);">الكليشة الرسمية التلقائية (جاهزة للديسكورد):</h3>
-            <div id="adminOutput" class="result-details">لا توجد نتائج مسجلة حتى الآن.</div>
-            
-            <button class="btn btn-copy" onclick="copyCliche()">نسخ الكليشة بضغطة زر 📋</button>
-            <button class="btn btn-danger" onclick="clearCloudData()">مسح كافة النتائج من السحابة ⚠️</button>
+            <div class="results-table-wrapper">
+
+                <table class="results-table">
+
+                    <thead>
+                        <tr>
+                            <th>الفني</th>
+                            <th>الدورة</th>
+                            <th>النتيجة</th>
+                            <th>التاريخ</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="adminResultsTable">
+                        <tr>
+                            <td colspan="4">
+                                جاري تحميل البيانات...
+                            </td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <button
+                class="btn btn-refresh"
+                onclick="refreshCloudResults()"
+            >
+                🔄 تحديث النتائج
+            </button>
+
+
+            <h3 style="margin-top:20px;color:var(--accent-color);">
+                الكليشة الرسمية التلقائية:
+            </h3>
+
+            <div
+                id="adminOutput"
+                class="result-details"
+            >
+                لا توجد نتائج مسجلة حتى الآن.
+            </div>
+
+
+            <button
+                class="btn btn-copy"
+                onclick="copyCliche()"
+            >
+                نسخ الكليشة بضغطة زر 📋
+            </button>
+
+
+            <button
+                class="btn btn-danger"
+                onclick="clearCloudData()"
+            >
+                مسح كافة النتائج من السحابة ⚠️
+            </button>
+
         </div>
+
     </div>
+
 </div>
 
+
 <script>
+
+    /* =========================================================
+       FIREBASE
+    ========================================================= */
+
     const firebaseConfig = {
         apiKey: "AIzaSyCFdeQcvuGjLGYCstg77D-JyaJsLk1SRmI",
         authDomain: "mica-54abc.firebaseapp.com",
@@ -440,299 +789,1687 @@
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
+
     const database = firebase.database();
 
-    // تم التعديل لتكون الإجابة الصحيحة لكل الأسئلة هي الاختيار الأول (0) دائماً
+
+    /* =========================================================
+       الاختبارات
+    ========================================================= */
+
     const examsData = {
+
         field_guide: {
+
             title: "الموجه الميداني",
+
             questions: [
-                { q: "من هو الموجه الميداني ؟", options: ["هو الشخص المسؤول عن توجيه الفنيين في الميدان بطريقة مناسبة.", "هو الشخص المسؤول عن كتابة التقرير في نهاية كل ساعة.", "هو الشخص المسؤول عن استقبال رسائل واتصالات الجوال وتمريرها للفنيين والمشرفين بالشكل الصحيح."], a: 0 },
-                { q: "من هو نائب الموجه الميداني ؟", options: ["هو الشخص المسؤول عن كتابة التقرير في نهاية كل ساعة.", "هو الشخص المسؤول عن توجيه الفنيين في الميدان بطريقة مناسبة.", "هو الشخص المسؤول عن استقبال رسائل واتصالات الجوال وتمريرها للفنيين والمشرفين بالشكل الصحيح."], a: 0 },
-                { q: "من هو مركز الاتصالات ؟", options: ["هو الشخص المسؤول عن استقبال رسائل واتصالات الجوال وتمريرها للفنيين والمشرفين بالشكل الصحيح.", "هو الشخص المسؤول عن كتابة التقرير في نهاية كل ساعة.", "هو الشخص المسؤول عن توجيه الفنيين في الميدان بطريقة مناسبة."], a: 0 },
-                { q: "من مهام الموجه الميداني ؟", options: ["توجيه الوحدات داخل روم العمليات", "كتابة التقارير", "استلام بلاغات الجوال", "استلام البلاغات عبر الراديو"], a: 0 },
-                { q: "من مهام نائب الموجه الميداني ؟", options: ["كتابة التقرير الميداني", "التغيب عن الروم و التركيز في الراديو", "المباشرة في بوليتو", "استلام بلاغات التعديل و التزويد"], a: 0 },
-                { q: "من مهام مركز الاتصالات ؟", options: ["استقبال الاتصالات و تمريرها عبر الراديو", "استقبال البلاغات عبر الموجه", "اهمال الاتصالات عبر الهاتف", "كتابة التقرير و تسجيل الوحدات"], a: 0 },
-                { q: "في حال وجود 6 وحدات بالميدان ماهي طريقة التوزيع ؟", options: ["2 لوس . 2 ساندي . 2 بوليتو", "3 لوس . 2 ساندي . 1 بوليتو", "3 لوس . 1 ساندي . 2 بوليتو", "1 لوس . 3 ساندي . 2 بوليتو"], a: 0 },
-                { q: "أولوية تمرير بلاغات التعديل و التزويد:", options: ["اشراف منطقة . العمليات او النائب . الموجه الميداني", "اشراف عام . اشراف منطقة . الموجة الميداني", "القيادة . اشراف عام . اشراف منطقة", "اشراف منطقة . اشراف عام . القيادة"], a: 0 },
-                { q: "أولوية تمرير بلاغات فني ميناء:", options: ["اشراف منطقة . العمليات او النائب . الموجه الميداني", "اشراف عام . اشراف منطقة . الموجة الميداني", "اشراف منطقة . اشراف عام . الموجة الميداني", "العمليات . اشراف منطقة . اشراف عام"], a: 0 },
-                { q: "ما هو التصرف الصحيح في حال تم اعطائك (❌) على تقريرك ؟", options: ["تعديل الخطأ وإعلامه برسالة \"تم التعديل\" في روم ملاحظات التقارير", "تجاهل الخطأ", "حذف التقرير", "تعديل الخطأ بدون إعلامه في روم ملاحظات التقارير"], a: 0 }
+
+                {
+                    q: "من هو الموجه الميداني ؟",
+                    options: [
+                        "هو الشخص المسؤول عن توجيه الفنيين في الميدان بطريقة مناسبة.",
+                        "هو الشخص المسؤول عن كتابة التقرير في نهاية كل ساعة.",
+                        "هو الشخص المسؤول عن استقبال رسائل واتصالات الجوال وتمريرها للفنيين والمشرفين بالشكل الصحيح."
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "من هو نائب الموجه الميداني ؟",
+                    options: [
+                        "هو الشخص المسؤول عن استقبال رسائل واتصالات الجوال وتمريرها للفنيين والمشرفين بالشكل الصحيح.",
+                        "هو الشخص المسؤول عن توجيه الفنيين في الميدان بطريقة مناسبة.",
+                        "هو الشخص المسؤول عن كتابة التقرير في نهاية كل ساعة."
+                    ],
+                    a: 2
+                },
+
+                {
+                    q: "من هو مركز الاتصالات ؟",
+                    options: [
+                        "هو الشخص المسؤول عن استقبال رسائل واتصالات الجوال وتمريرها للفنيين والمشرفين بالشكل الصحيح.",
+                        "هو الشخص المسؤول عن كتابة التقرير في نهاية كل ساعة.",
+                        "هو الشخص المسؤول عن توجيه الفنيين في الميدان بطريقة مناسبة."
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "من مهام الموجه الميداني ؟",
+                    options: [
+                        "توجيه الوحدات داخل روم العمليات",
+                        "كتابة التقارير",
+                        "استلام بلاغات الجوال",
+                        "استلام البلاغات عبر الراديو"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "من مهام نائب الموجه الميداني ؟",
+                    options: [
+                        "كتابة التقرير الميداني",
+                        "التغيب عن الروم و التركيز في الراديو",
+                        "المباشرة في بوليتو",
+                        "استلام بلاغات التعديل و التزويد"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "من مهام مركز الاتصالات ؟",
+                    options: [
+                        "استقبال الاتصالات و تمريرها عبر الراديو",
+                        "استقبال البلاغات عبر الموجه",
+                        "اهمال الاتصالات عبر الهاتف",
+                        "كتابة التقرير و تسجيل الوحدات"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "في حال وجود 6 وحدات بالميدان ماهي طريقة التوزيع ؟",
+                    options: [
+                        "2 لوس . 2 ساندي . 2 بوليتو",
+                        "3 لوس . 2 ساندي . 1 بوليتو",
+                        "3 لوس . 1 ساندي . 2 بوليتو",
+                        "1 لوس . 3 ساندي . 2 بوليتو"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "أولوية تمرير بلاغات التعديل و التزويد:",
+                    options: [
+                        "اشراف منطقة . العمليات او النائب . الموجه الميداني",
+                        "اشراف عام . اشراف منطقة . الموجة الميداني",
+                        "القيادة . اشراف عام . اشراف منطقة",
+                        "اشراف منطقة . اشراف عام . القيادة"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "أولوية تمرير بلاغات فني ميناء:",
+                    options: [
+                        "اشراف منطقة . اشراف عام . الموجة الميداني",
+                        "اشراف عام . اشراف منطقة . الموجة الميداني",
+                        "اشراف منطقة . العمليات او النائب . الموجه الميداني",
+                        "العمليات . اشراف منطقة . اشراف عام"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "ما هو التصرف الصحيح في حال تم اعطائك (❌) على تقريرك ؟",
+                    options: [
+                        'تعديل الخطأ وإعلامه برسالة "تم التعديل" في روم ملاحظات التقارير',
+                        "تجاهل الخطأ",
+                        "حذف التقرير",
+                        "تعديل الخطأ بدون إعلامه في روم ملاحظات التقارير"
+                    ],
+                    a: 0
+                }
+
             ]
         },
+
+
         manufacturing: {
+
             title: "التصنيع",
+
             questions: [
-                { q: "من قوانين التصنيع ؟", options: ["ان يكون الفني متقدم عبر الرابط المرسل", "ان يكون الفني مستوى 5 بالميكانيك", "ان يكون مستوى الفني +65بالمدينة"], a: 0 },
-                { q: "من محظورات دورة التصنيع ؟", options: ["تصنيع اكثر من 100 صندوق", "الاكل و الشرب اثناء التصنيع", "جلب الحديد للموقع"], a: 0 },
-                { q: "ما هو الهدف من التصنيع ؟", options: ["توفير العدد للتجار لتوفيرها بالمتاجر للعامة", "كسب المال", "التوجه للحالات الجنائية", "إبلاغ العمليات عن رصد حاله جنائية"], a: 0 },
-                { q: "من شروط التصنيع ؟", options: ["التقديم عبر الرابط المرسل", "ان أكون مستوى 1", "ح حاصل على جميع الدورات"], a: 0 },
-                { q: "كم الحديد المطلوب ل تصنيع 100 صندوق ؟", options: ["2500 حديدة", "2550 حديدة", "1500 حديدة", "2000 حديدة"], a: 0 },
-                { q: "كم سعر شراء قطعة الحديد الواحدة ؟", options: ["250 - 450", "200- 400", "300 - 400", "350 - 450"], a: 0 },
-                { q: "ماهي الطريقة الصحيحة لشراء الحديد ؟", options: ["عبر روم بيع-الحديد-للميكانيك", "عبر الخاص", "عبر روم رسائل الميكانيك"], a: 0 },
-                { q: "يسمح بالتصنيع للمصلحة الشخصية ؟", options: ["خطأ", "صح"], a: 0 },
-                { q: "م مواقع التصنيع المعتمدة:", options: ["مركز SRT مربع 2015", "مركز بوليتو 907", "مركز لوس 7032"], a: 0 },
-                { q: "شراء الحديد يتم توثيقه بالفاتورة ؟", options: ["صح", "خطأ"], a: 0 }
+
+                {
+                    q: "من قوانين التصنيع ؟",
+                    options: [
+                        "ان يكون الفني متقدم عبر الرابط المرسل",
+                        "ان يكون الفني مستوى 5 بالميكانيك",
+                        "ان يكون مستوى الفني +65بالمدينة"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "من محظورات دورة التصنيع ؟",
+                    options: [
+                        "تصنيع اكثر من 100 صندوق",
+                        "الاكل و الشرب اثناء التصنيع",
+                        "جلب الحديد للموقع"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "ما هو الهدف من التصنيع ؟",
+                    options: [
+                        "توفير العدد للتجار لتوفيرها بالمتاجر للعامة",
+                        "كسب المال",
+                        "التوجه للحالات الجنائية",
+                        "إبلاغ العمليات عن رصد حاله جنائية"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "من شروط التصنيع ؟",
+                    options: [
+                        "التقديم عبر الرابط المرسل",
+                        "ان أكون مستوى 1",
+                        "ح حاصل على جميع الدورات"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "كم الحديد المطلوب لتصنيع 100 صندوق ؟",
+                    options: [
+                        "2500 حديدة",
+                        "2550 حديدة",
+                        "1500 حديدة",
+                        "2000 حديدة"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "كم سعر شراء قطعة الحديد الواحدة ؟",
+                    options: [
+                        "250 - 450",
+                        "200 - 400",
+                        "300 - 400",
+                        "350 - 450"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "ماهي الطريقة الصحيحة لشراء الحديد ؟",
+                    options: [
+                        "عبر روم بيع-الحديد-للميكانيك",
+                        "عبر الخاص",
+                        "عبر روم رسائل الميكانيك"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "يسمح بالتصنيع للمصلحة الشخصية ؟",
+                    options: [
+                        "خطأ",
+                        "صح"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "مواقع التصنيع المعتمدة:",
+                    options: [
+                        "مركز SRT مربع 2015",
+                        "مركز بوليتو 907",
+                        "مركز لوس 7032"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "شراء الحديد يتم توثيقه بالفاتورة ؟",
+                    options: [
+                        "صح",
+                        "خطأ"
+                    ],
+                    a: 0
+                }
+
             ]
         },
+
+
         modification: {
+
             title: "التعديل والتزويد",
+
             questions: [
-                { q: "من قوانين التعديل التزويد:", options: ["احتساب تكلفة الإكسترا بقيمة 10 k للقطعة الواحدة و يتم استقطاع المبلغ عبر الفاتورة", "تركيب بوري الشرطة على سيارات المواطنين", "تعديل المركبة الشخصية بنفسك", "طلب هوية العميل و التأكد من ملكية المركبة قبل العمل عليها"], a: 0 },
-                { q: "متطلبات افتتاح كراج التعديل و التزويد:", options: ["تواجد إدارة كراج الميكانيك او تصريح للتعديل و التزويد", "تواجد 3 وحدات حاصله على دورة التعديل و التزويد", "ان يكون عدد الاشخاص داخل المقاطعة + 350"], a: 0 },
-                { q: "متى يتم ارسال تقرير توزيع المسارات ؟", options: ["قبل الافتتاح", "بعد الافتتاح"], a: 0 },
-                { q: "يمنع الذهاب إلى مسؤول التقرير و طلب تغيير المسار ؟", options: ["صح", "خطأ"], a: 0 },
-                { q: "يجب ان يكون مسؤول التقرير اعلى رتبة بين المهندسين ؟", options: ["خطأ", "صح"], a: 0 },
-                { q: "محظورات التعديل و التزويد:", options: ["تعديل المركبة في مكان غير مخصص", "التأكد من هوية العميل", "إعطاء فاتورة في حال تم تعديل إكسترا", "إخفاء المراوح من الهيليكوبتر"], a: 0 },
-                { q: "بعد تعديل الإكسترا يجب تثبيت اللوحة ؟", options: ["صح", "خطأ"], a: 0 },
-                { q: "هل يحق تعديل مركبات المواطنين بدون ترخيص ؟", options: ["لا", "نعم"], a: 0 },
-                { q: "هل يحق لغير حاملي الدورة تعديل التزويد ؟", options: ["لا", "نعم"], a: 0 },
-                { q: "مكان التعديل الرسمي يكون داخل الكراج المخصص فقط ؟", options: ["صح", "خطأ"], a: 0 }
+
+                {
+                    q: "من قوانين التعديل التزويد:",
+                    options: [
+                        "احتساب تكلفة الإكسترا بقيمة 10 k للقطعة الواحدة و يتم استقطاع المبلغ عبر الفاتورة",
+                        "تركيب بوري الشرطة على سيارات المواطنين",
+                        "تعديل المركبة الشخصية بنفسك",
+                        "طلب هوية العميل و التأكد من ملكية المركبة قبل العمل عليها"
+                    ],
+                    multi: true,
+                    a: [0, 3]
+                },
+
+                {
+                    q: "متطلبات افتتاح كراج التعديل و التزويد:",
+                    options: [
+                        "تواجد إدارة كراج الميكانيك او تصريح للتعديل و التزويد",
+                        "تواجد 3 وحدات حاصله على دورة التعديل و التزويد",
+                        "ان يكون عدد الاشخاص داخل المقاطعة + 350"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "متى يتم ارسال تقرير توزيع المسارات ؟",
+                    options: [
+                        "قبل الافتتاح",
+                        "بعد الافتتاح"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "يمنع الذهاب إلى مسؤول التقرير و طلب تغيير المسار ؟",
+                    options: [
+                        "صح",
+                        "خطأ"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "يجب ان يكون مسؤول التقرير اعلى رتبة بين المهندسين ؟",
+                    options: [
+                        "خطأ",
+                        "صح"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "محظورات التعديل و التزويد:",
+                    options: [
+                        "التأكد من هوية العميل",
+                        "تعديل المركبة في مكان غير مخصص",
+                        "إعطاء فاتورة في حال تم تعديل إكسترا",
+                        "إخفاء المراوح من الهيليكوبتر"
+                    ],
+                    multi: true,
+                    a: [1, 3]
+                },
+
+                {
+                    q: "بعد تعديل الإكسترا يجب تثبيت اللوحة ؟",
+                    options: [
+                        "صح",
+                        "خطأ"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "هل يحق تعديل مركبات المواطنين بدون ترخيص ؟",
+                    options: [
+                        "لا",
+                        "نعم"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "هل يحق لغير حاملي الدورة تعديل التزويد ؟",
+                    options: [
+                        "لا",
+                        "نعم"
+                    ],
+                    a: 0
+                },
+
+                {
+                    q: "مكان التعديل الرسمي يكون داخل الكراج المخصص فقط ؟",
+                    options: [
+                        "صح",
+                        "خطأ"
+                    ],
+                    a: 0
+                }
+
             ]
         }
+
     };
+
+
+    /* =========================================================
+       متغيرات النظام
+    ========================================================= */
 
     let activeExamKey = "";
     let rawCloudData = null;
+    let isSubmitting = false;
+
+
+    /* =========================================================
+       النوافذ
+    ========================================================= */
 
     function toggleModal(id) {
+
         const modal = document.getElementById(id);
-        modal.style.display = (modal.style.display === "flex") ? "none" : "flex";
+
+        if (modal.style.display === "flex") {
+            modal.style.display = "none";
+        } else {
+            modal.style.display = "flex";
+        }
     }
 
+
+    function openAdminPanel() {
+        toggleModal("adminModal");
+    }
+
+
+    /* =========================================================
+       بدء الاختبار
+    ========================================================= */
+
     function startExam() {
-        const discordInput = document.getElementById('discordId').value.trim();
-        const courseSelect = document.getElementById('courseSelect').value;
+
+        const discordInput =
+            document.getElementById("discordId").value.trim();
+
+        const courseSelect =
+            document.getElementById("courseSelect").value;
 
         if (!discordInput) {
-            alert("يرجى إدخال معرف الديسكورد (Discord User ID) أولاً.");
+
+            alert(
+                "يرجى إدخال معرف الديسكورد (Discord User ID) أولاً."
+            );
+
+            return;
+        }
+
+        /*
+         * التحقق من أن الـ Discord ID رقمي
+         */
+        if (!/^\d+$/.test(discordInput)) {
+
+            alert(
+                "معرف الديسكورد يجب أن يكون أرقام فقط."
+            );
+
             return;
         }
 
         if (!courseSelect) {
-            alert("يرجى اختيار الدورة المحددة.");
+
+            alert(
+                "يرجى اختيار الدورة المحددة."
+            );
+
             return;
         }
 
         activeExamKey = courseSelect;
+
         const examData = examsData[activeExamKey];
 
-        const container = document.getElementById('questionsContainer');
-        container.innerHTML = `<h2 style="margin-bottom: 20px; color: var(--accent-color);">اختبار دورة: ${examData.title}</h2>`;
+        if (!examData) {
 
-        examData.questions.forEach((q, index) => {
-            let qHtml = `<div class="question"><p>${index + 1}. ${q.q}</p>`;
-            q.options.forEach((opt, optIdx) => {
-                const inputName = `q_${index}`;
-                qHtml += `
-                    <label class="option">
-                        <input type="radio" name="${inputName}" value="${optIdx}">
-                        ${opt}
-                    </label>
-                `;
-            });
-            qHtml += `</div>`;
-            container.innerHTML += qHtml;
-        });
+            alert("تعذر العثور على بيانات الاختبار.");
 
-        document.getElementById('setupCard').classList.add('hidden');
-        document.getElementById('examCard').classList.remove('hidden');
-    }
-
-    function submitExam() {
-        const currentDiscordId = document.getElementById('discordId').value.trim();
-        const examData = examsData[activeExamKey];
-        let score = 0;
-
-        examData.questions.forEach((q, index) => {
-            const inputs = document.querySelectorAll(`input[name="q_${index}"]:checked`);
-            if (inputs.length > 0) {
-                const selectedVal = parseInt(inputs[0].value);
-                if (selectedVal === q.a) {
-                    score++;
-                }
-            }
-        });
-
-        const newResultRef = database.ref('results').push();
-        newResultRef.set({
-            discordId: currentDiscordId,
-            courseKey: activeExamKey,
-            courseTitle: examData.title,
-            score: score,
-            maxScore: examData.questions.length,
-            timestamp: new Date().toLocaleString('ar-SA')
-        }).then(() => {
-            document.getElementById('userScoreDisplay').innerText = `تم تسجيل إجاباتك بنجاح! النتيجة المحصلة: (${score} / ${examData.questions.length})`;
-            document.getElementById('examCard').classList.add('hidden');
-            document.getElementById('submittedCard').classList.remove('hidden');
-        }).catch((err) => {
-            alert("حدث خطأ في الاتصال بالسحابة: " + err.message);
-        });
-    }
-
-    function resetToHome() {
-        document.getElementById('submittedCard').classList.add('hidden');
-        document.getElementById('setupCard').classList.remove('hidden');
-        document.getElementById('discordId').value = "";
-    }
-
-    function openAdminPanel() {
-        toggleModal('adminModal');
-    }
-
-    function verifyAdmin() {
-        const pass = document.getElementById('adminPass').value;
-        if (pass === "8989") { 
-            document.getElementById('adminAuth').classList.add('hidden');
-            document.getElementById('adminControls').classList.remove('hidden');
-            listenToCloudResults();
-        } else {
-            alert("كلمة المرور خاطئة!");
-        }
-    }
-
-    function listenToCloudResults() {
-        database.ref('results').on('value', (snapshot) => {
-            rawCloudData = snapshot.val();
-            renderCloudResults();
-        });
-    }
-
-    function deleteSingleResult(key) {
-        if (confirm("هل تريد حذف هذا السجل بالتحديد؟")) {
-            database.ref('results/' + key).remove();
-        }
-    }
-
-    function renderCloudResults() {
-        const tableBody = document.getElementById('adminResultsTable');
-        const outputDiv = document.getElementById('adminOutput');
-        const selectedCourseKey = document.getElementById('adminFilterCourse').value;
-        const courseNum = document.getElementById('courseNumberInput').value.trim() || "1";
-        
-        const sharhId = document.getElementById('sharhInput').value.trim();
-        const managerId = document.getElementById('managerInput').value.trim();
-        const deputyId = document.getElementById('deputyInput').value.trim();
-
-        const currentExamData = examsData[selectedCourseKey];
-
-        if (!rawCloudData) {
-            tableBody.innerHTML = `<tr><td colspan="5">لا توجد نتائج مسجلة حتى الآن.</td></tr>`;
-            outputDiv.innerText = "لا توجد نتائج مسجلة حتى الآن.";
             return;
         }
 
-        tableBody.innerHTML = "";
+        const container =
+            document.getElementById("questionsContainer");
 
-        let grade10 = [];
-        let grade09 = [];
-        let grade08 = [];
-        let grade07 = [];
+        container.innerHTML = "";
 
-        Object.entries(rawCloudData).forEach(([key, item]) => {
-            const isMatch = (item.courseKey === selectedCourseKey) || 
-                            (item.courseTitle && item.courseTitle.includes(currentExamData.title)) ||
-                            (item.courseTitle && currentExamData.title.includes(item.courseTitle)) ||
-                            (selectedCourseKey === "field_guide" && (item.courseKey === "field_guide" || (item.courseTitle && item.courseTitle.includes("الموجه"))));
+        const title =
+            document.createElement("h2");
 
-            if (isMatch) {
-                tableBody.innerHTML += `
-                    <tr>
-                        <td><@${item.discordId}></td>
-                        <td>${item.courseTitle}</td>
-                        <td>${item.score} / ${item.maxScore}</td>
-                        <td>${item.timestamp}</td>
-                        <td><button class="btn-delete-row" onclick="deleteSingleResult('${key}')">مسح</button></td>
-                    </tr>
-                `;
+        title.style.marginBottom = "20px";
+        title.style.color = "var(--accent-color)";
+        title.textContent =
+            "اختبار دورة: " + examData.title;
 
-                const mention = `<@${item.discordId}>`;
-                const userScore = Number(item.score);
+        container.appendChild(title);
 
-                if (userScore === 10) grade10.push(mention);
-                else if (userScore === 9) grade09.push(mention);
-                else if (userScore === 8) grade08.push(mention);
-                else if (userScore === 7) grade07.push(mention);
-            }
+
+        examData.questions.forEach((q, index) => {
+
+            const questionDiv =
+                document.createElement("div");
+
+            questionDiv.className = "question";
+
+            questionDiv.id =
+                "question_" + index;
+
+
+            const questionText =
+                document.createElement("p");
+
+            const numberSpan =
+                document.createElement("span");
+
+            numberSpan.className = "question-number";
+
+            numberSpan.textContent =
+                (index + 1) + ". ";
+
+            questionText.appendChild(numberSpan);
+
+            questionText.appendChild(
+                document.createTextNode(q.q)
+            );
+
+            questionDiv.appendChild(questionText);
+
+
+            q.options.forEach((opt, optIdx) => {
+
+                const label =
+                    document.createElement("label");
+
+                label.className = "option";
+
+
+                const input =
+                    document.createElement("input");
+
+                input.type =
+                    q.multi ? "checkbox" : "radio";
+
+                input.name =
+                    "q_" + index;
+
+                input.value =
+                    optIdx;
+
+
+                const text =
+                    document.createTextNode(opt);
+
+
+                label.appendChild(input);
+
+                label.appendChild(text);
+
+                questionDiv.appendChild(label);
+
+            });
+
+
+            const unansweredMessage =
+                document.createElement("div");
+
+            unansweredMessage.className =
+                "unanswered-message";
+
+            unansweredMessage.textContent =
+                "⚠️ يرجى الإجابة على هذا السؤال.";
+
+            questionDiv.appendChild(
+                unansweredMessage
+            );
+
+
+            container.appendChild(questionDiv);
+
         });
 
-        const str10 = grade10.length > 0 ? grade10.join(" , ") : "لا يوجد";
-        const str09 = grade09.length > 0 ? grade09.join(" , ") : "لا يوجد";
-        const str08 = grade08.length > 0 ? grade08.join(" , ") : "لا يوجد";
-        const str07 = grade07.length > 0 ? grade07.join(" , ") : "لا يوجد";
 
-        const sharhMention = sharhId ? `<@${sharhId}>` : "";
-        const managerMention = managerId ? `<@${managerId}>` : "";
-        const deputyMention = deputyId ? `<@${deputyId}>` : "";
+        document
+            .getElementById("setupCard")
+            .classList.add("hidden");
 
-        let clicheText = `***﷽***
+        document
+            .getElementById("submittedCard")
+            .classList.add("hidden");
+
+        document
+            .getElementById("examCard")
+            .classList.remove("hidden");
+
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    }
+
+
+    /* =========================================================
+       حساب الإجابات
+    ========================================================= */
+
+    function calculateScore(examData) {
+
+        let score = 0;
+
+        let unanswered = [];
+
+
+        examData.questions.forEach((q, index) => {
+
+            const inputs =
+                document.querySelectorAll(
+                    `input[name="q_${index}"]:checked`
+                );
+
+
+            /*
+             * السؤال متعدد
+             */
+            if (q.multi) {
+
+                const userAnswers =
+                    Array.from(inputs)
+                        .map(input => Number(input.value))
+                        .sort((a, b) => a - b);
+
+
+                const correctAnswers =
+                    Array.isArray(q.a)
+                        ? q.a.map(Number).sort((a, b) => a - b)
+                        : [Number(q.a)];
+
+
+                if (userAnswers.length === 0) {
+
+                    unanswered.push(index);
+
+                } else if (
+                    userAnswers.length === correctAnswers.length &&
+                    userAnswers.every(
+                        (value, i) =>
+                            value === correctAnswers[i]
+                    )
+                ) {
+
+                    score++;
+
+                }
+
+            }
+
+            /*
+             * السؤال العادي
+             */
+            else {
+
+                if (inputs.length === 0) {
+
+                    unanswered.push(index);
+
+                } else {
+
+                    const userAnswer =
+                        Number(inputs[0].value);
+
+                    const correctAnswer =
+                        Array.isArray(q.a)
+                            ? Number(q.a[0])
+                            : Number(q.a);
+
+
+                    if (userAnswer === correctAnswer) {
+                        score++;
+                    }
+
+                }
+
+            }
+
+        });
+
+
+        return {
+            score,
+            unanswered
+        };
+    }
+
+
+    /* =========================================================
+       إرسال الاختبار
+    ========================================================= */
+
+    async function submitExam() {
+
+        if (isSubmitting) {
+            return;
+        }
+
+
+        const currentDiscordId =
+            document
+                .getElementById("discordId")
+                .value
+                .trim();
+
+
+        const examData =
+            examsData[activeExamKey];
+
+
+        if (!currentDiscordId || !examData) {
+
+            alert(
+                "حدث خطأ، يرجى العودة وبدء الاختبار من جديد."
+            );
+
+            return;
+        }
+
+
+        /*
+         * إزالة علامات الأسئلة السابقة
+         */
+        document
+            .querySelectorAll(".question")
+            .forEach(question => {
+                question.classList.remove("unanswered");
+            });
+
+
+        const result =
+            calculateScore(examData);
+
+
+        /*
+         * منع الإرسال إذا يوجد سؤال بدون إجابة
+         */
+        if (result.unanswered.length > 0) {
+
+            result.unanswered.forEach(index => {
+
+                const question =
+                    document.getElementById(
+                        "question_" + index
+                    );
+
+                if (question) {
+                    question.classList.add("unanswered");
+                }
+
+            });
+
+
+            const firstUnanswered =
+                document.getElementById(
+                    "question_" + result.unanswered[0]
+                );
+
+
+            if (firstUnanswered) {
+
+                firstUnanswered.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+
+            }
+
+
+            alert(
+                "يرجى الإجابة على جميع الأسئلة قبل إرسال الاختبار."
+            );
+
+            return;
+        }
+
+
+        const score = result.score;
+
+        const maxScore =
+            examData.questions.length;
+
+
+        /*
+         * حماية إضافية من أي نتيجة غير صحيحة
+         */
+        if (
+            score < 0 ||
+            score > maxScore
+        ) {
+
+            alert(
+                "حدث خطأ أثناء حساب الدرجة."
+            );
+
+            return;
+        }
+
+
+        isSubmitting = true;
+
+
+        const submitButton =
+            document.getElementById(
+                "submitExamBtn"
+            );
+
+
+        submitButton.disabled = true;
+
+        submitButton.textContent =
+            "جاري حفظ النتيجة...";
+
+
+        /*
+         * استخدام timestamp رقمي ثابت
+         * بدل الاعتماد على صيغة التاريخ المحلية
+         */
+        const timestamp =
+            Date.now();
+
+
+        /*
+         * تاريخ العرض فقط
+         */
+        const displayDate =
+            new Date().toLocaleString(
+                "ar-SA",
+                {
+                    dateStyle: "medium",
+                    timeStyle: "short"
+                }
+            );
+
+
+        try {
+
+            const newResultRef =
+                database
+                    .ref("results")
+                    .push();
+
+
+            await newResultRef.set({
+
+                discordId:
+                    currentDiscordId,
+
+                courseKey:
+                    activeExamKey,
+
+                courseTitle:
+                    examData.title,
+
+                score:
+                    score,
+
+                maxScore:
+                    maxScore,
+
+                timestamp:
+                    timestamp,
+
+                displayDate:
+                    displayDate
+
+            });
+
+
+            /*
+             * عرض النتيجة للفني
+             */
+            document.getElementById(
+                "finalScore"
+            ).textContent =
+                `درجتك: ${score} / ${maxScore}`;
+
+
+            document
+                .getElementById("examCard")
+                .classList.add("hidden");
+
+
+            document
+                .getElementById("submittedCard")
+                .classList.remove("hidden");
+
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+
+
+        } catch (err) {
+
+            console.error(err);
+
+            alert(
+                "حدث خطأ في الاتصال بالسحابة:\n" +
+                err.message
+            );
+
+
+            isSubmitting = false;
+
+            submitButton.disabled = false;
+
+            submitButton.textContent =
+                "إنهاء الاختبار وتأكيد إرسال الإجابات";
+        }
+
+    }
+
+
+    /* =========================================================
+       العودة للرئيسية
+    ========================================================= */
+
+    function resetToHome() {
+
+        document
+            .getElementById("submittedCard")
+            .classList.add("hidden");
+
+
+        document
+            .getElementById("examCard")
+            .classList.add("hidden");
+
+
+        document
+            .getElementById("setupCard")
+            .classList.remove("hidden");
+
+
+        document
+            .getElementById("discordId")
+            .value = "";
+
+
+        document
+            .getElementById("courseSelect")
+            .value = "";
+
+
+        document
+            .getElementById("questionsContainer")
+            .innerHTML = "";
+
+
+        isSubmitting = false;
+
+
+        const submitButton =
+            document.getElementById(
+                "submitExamBtn"
+            );
+
+
+        submitButton.disabled = false;
+
+        submitButton.textContent =
+            "إنهاء الاختبار وتأكيد إرسال الإجابات";
+    }
+
+
+    /* =========================================================
+       دخول المشرف
+    ========================================================= */
+
+    function verifyAdmin() {
+
+        const pass =
+            document
+                .getElementById("adminPass")
+                .value;
+
+
+        /*
+         * كلمة المرور الحالية
+         */
+        if (pass === "8989") {
+
+            document
+                .getElementById("adminAuth")
+                .classList.add("hidden");
+
+
+            document
+                .getElementById("adminControls")
+                .classList.remove("hidden");
+
+
+            listenToCloudResults();
+
+        } else {
+
+            alert(
+                "كلمة المرور خاطئة!"
+            );
+
+        }
+
+    }
+
+
+    /* =========================================================
+       الاستماع للنتائج
+    ========================================================= */
+
+    function listenToCloudResults() {
+
+        database
+            .ref("results")
+            .on("value", snapshot => {
+
+                rawCloudData =
+                    snapshot.val();
+
+                renderCloudResults();
+
+            });
+
+    }
+
+
+    function refreshCloudResults() {
+
+        database
+            .ref("results")
+            .once("value")
+            .then(snapshot => {
+
+                rawCloudData =
+                    snapshot.val();
+
+                renderCloudResults();
+
+                alert(
+                    "✅ تم تحديث النتائج."
+                );
+
+            })
+            .catch(err => {
+
+                alert(
+                    "حدث خطأ أثناء تحديث النتائج: " +
+                    err.message
+                );
+
+            });
+
+    }
+
+
+    /* =========================================================
+       تحويل الدرجة إلى من 10
+       
+       مثال:
+       10 / 10 = 10
+       9 / 10  = 9
+       8 / 10  = 8
+       7 / 10  = 7
+       
+       ولو أصبح الاختبار 20 سؤال:
+       20 / 20 = 10
+       18 / 20 = 9
+       16 / 20 = 8
+       14 / 20 = 7
+    ========================================================= */
+
+    function convertScoreToTen(score, maxScore) {
+
+        score =
+            Number(score);
+
+        maxScore =
+            Number(maxScore);
+
+
+        if (
+            !Number.isFinite(score) ||
+            !Number.isFinite(maxScore) ||
+            maxScore <= 0
+        ) {
+
+            return 0;
+
+        }
+
+
+        let result =
+            (score / maxScore) * 10;
+
+
+        /*
+         * التقريب لأقرب درجة صحيحة
+         */
+        result =
+            Math.round(result);
+
+
+        /*
+         * حماية من تجاوز 10
+         */
+        if (result > 10) {
+            result = 10;
+        }
+
+
+        if (result < 0) {
+            result = 0;
+        }
+
+
+        return result;
+    }
+
+
+    /* =========================================================
+       تنظيف Discord ID
+    ========================================================= */
+
+    function discordMention(id) {
+
+        if (!id) {
+            return "";
+        }
+
+        const cleanId =
+            String(id)
+                .replace(/\D/g, "");
+
+        if (!cleanId) {
+            return "";
+        }
+
+        return `<@${cleanId}>`;
+    }
+
+
+    /* =========================================================
+       عرض نتائج المشرف
+    ========================================================= */
+
+    function renderCloudResults() {
+
+        const tableBody =
+            document.getElementById(
+                "adminResultsTable"
+            );
+
+
+        const outputDiv =
+            document.getElementById(
+                "adminOutput"
+            );
+
+
+        const selectedCourseKey =
+            document.getElementById(
+                "adminFilterCourse"
+            ).value;
+
+
+        const courseNum =
+            document.getElementById(
+                "courseNumberInput"
+            ).value.trim() || "1";
+
+
+        const sharhId =
+            document.getElementById(
+                "sharhInput"
+            ).value.trim();
+
+
+        const managerId =
+            document.getElementById(
+                "managerInput"
+            ).value.trim();
+
+
+        const deputyId =
+            document.getElementById(
+                "deputyInput"
+            ).value.trim();
+
+
+        const currentExamData =
+            examsData[selectedCourseKey];
+
+
+        /*
+         * إذا لا توجد بيانات
+         */
+        if (!rawCloudData) {
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="empty-row">
+                        لا توجد نتائج مسجلة حتى الآن.
+                    </td>
+                </tr>
+            `;
+
+
+            outputDiv.innerText =
+                "لا توجد نتائج مسجلة حتى الآن.";
+
+
+            return;
+        }
+
+
+        /*
+         * تصفية النتائج حسب الدورة
+         */
+        let results = [];
+
+
+        Object.entries(rawCloudData)
+            .forEach(([key, item]) => {
+
+                if (!item) {
+                    return;
+                }
+
+
+                /*
+                 * الاعتماد أولاً على courseKey
+                 * لأنه الأدق.
+                 */
+                const isMatch =
+                    item.courseKey === selectedCourseKey;
+
+
+                if (isMatch) {
+
+                    results.push({
+                        key,
+                        ...item
+                    });
+
+                }
+
+            });
+
+
+        /*
+         * ترتيب النتائج:
+         * الأعلى درجة أولاً
+         * ثم الأحدث
+         */
+        results.sort((a, b) => {
+
+            const aScore =
+                convertScoreToTen(
+                    a.score,
+                    a.maxScore
+                );
+
+
+            const bScore =
+                convertScoreToTen(
+                    b.score,
+                    b.maxScore
+                );
+
+
+            if (bScore !== aScore) {
+                return bScore - aScore;
+            }
+
+
+            return Number(b.timestamp || 0) -
+                   Number(a.timestamp || 0);
+
+        });
+
+
+        /*
+         * تنظيف الجدول
+         */
+        tableBody.innerHTML = "";
+
+
+        if (results.length === 0) {
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="empty-row">
+                        لا توجد نتائج لهذه الدورة.
+                    </td>
+                </tr>
+            `;
+
+        }
+
+
+        /*
+         * قوائم الكليشة
+         */
+        const grade10 = [];
+        const grade09 = [];
+        const grade08 = [];
+        const grade07 = [];
+
+
+        /*
+         * منع التكرار
+         */
+        const seenDiscordIds =
+            new Set();
+
+
+        results.forEach(item => {
+
+            const score =
+                Number(item.score);
+
+
+            const maxScore =
+                Number(item.maxScore);
+
+
+            /*
+             * أهم سطر في الإصلاح:
+             *
+             * نحسب الدرجة من 10 بناءً على
+             * الدرجة الحقيقية والدرجة القصوى.
+             */
+            const gradeOutOf10 =
+                convertScoreToTen(
+                    score,
+                    maxScore
+                );
+
+
+            const mention =
+                discordMention(
+                    item.discordId
+                );
+
+
+            /*
+             * التاريخ
+             */
+            let dateText =
+                item.displayDate;
+
+
+            if (!dateText) {
+
+                if (item.timestamp) {
+
+                    dateText =
+                        new Date(
+                            Number(item.timestamp)
+                        ).toLocaleString(
+                            "ar-SA"
+                        );
+
+                } else {
+
+                    dateText =
+                        "غير معروف";
+
+                }
+
+            }
+
+
+            /*
+             * تحديد لون الدرجة
+             */
+            let gradeClass = "";
+
+            if (gradeOutOf10 === 10) {
+                gradeClass = "grade-10";
+            } else if (gradeOutOf10 === 9) {
+                gradeClass = "grade-09";
+            } else if (gradeOutOf10 === 8) {
+                gradeClass = "grade-08";
+            } else if (gradeOutOf10 === 7) {
+                gradeClass = "grade-07";
+            }
+
+
+            /*
+             * إضافة للجدول
+             */
+            tableBody.innerHTML += `
+                <tr>
+                    <td>
+                        ${mention || item.discordId || "غير معروف"}
+                    </td>
+
+                    <td>
+                        ${item.courseTitle || currentExamData.title}
+                    </td>
+
+                    <td class="${gradeClass}">
+                        ${score} / ${maxScore}
+                        <br>
+                        <small>
+                            ${gradeOutOf10} / 10
+                        </small>
+                    </td>
+
+                    <td>
+                        ${dateText}
+                    </td>
+                </tr>
+            `;
+
+
+            /*
+             * منع تكرار الفني داخل الكليشة
+             *
+             * إذا كان له أكثر من نتيجة،
+             * نأخذ أحدث نتيجة فقط.
+             */
+            const discordKey =
+                String(
+                    item.discordId || ""
+                ).trim();
+
+
+            if (
+                !discordKey ||
+                seenDiscordIds.has(discordKey)
+            ) {
+
+                return;
+
+            }
+
+
+            seenDiscordIds.add(discordKey);
+
+
+            /*
+             * التصنيف النهائي للكليشة
+             */
+            if (gradeOutOf10 === 10) {
+
+                grade10.push(mention);
+
+            } else if (gradeOutOf10 === 9) {
+
+                grade09.push(mention);
+
+            } else if (gradeOutOf10 === 8) {
+
+                grade08.push(mention);
+
+            } else if (gradeOutOf10 === 7) {
+
+                grade07.push(mention);
+
+            }
+
+        });
+
+
+        /*
+         * تحويل المصفوفات إلى نص
+         */
+        const str10 =
+            grade10.length
+                ? grade10.join(" , ")
+                : "لا يوجد";
+
+
+        const str09 =
+            grade09.length
+                ? grade09.join(" , ")
+                : "لا يوجد";
+
+
+        const str08 =
+            grade08.length
+                ? grade08.join(" , ")
+                : "لا يوجد";
+
+
+        const str07 =
+            grade07.length
+                ? grade07.join(" , ")
+                : "لا يوجد";
+
+
+        const sharhMention =
+            discordMention(sharhId);
+
+
+        const managerMention =
+            discordMention(managerId);
+
+
+        const deputyMention =
+            discordMention(deputyId);
+
+
+        /*
+         * الكليشة
+         */
+        const clicheText =
+`***﷽***
 
 ***اما بعد ..***
 
-***رصد درجات الناجحين في دورة *** 
+***رصد درجات الناجحين في دورة***
+
 ***\`\`\` اسم الدورة ( ${currentExamData.title} ) (${courseNum})\`\`\`***
 
-***10 / 10 ***
-
+***10 / 10***
 
 (   ${str10}   )
 
 
-
-***10 / 09 ***
-
+***10 / 09***
 
 (   ${str09}   )
 
 
-
-***10 / 08 ***
-
+***10 / 08***
 
 (   ${str08}   )
 
 
-
-***10 / 07 ***
-
+***10 / 07***
 
 (   ${str07}   )
 
 
-
-
 ---------------------------------------------------------------------------------------
 
+***شرح : ${sharhMention}***
 
-***شرح :  ${sharhMention}       *** 
+***مسؤول الدورة : ${managerMention}***
 
-*** مسؤول الدورة  : ${managerMention}      ***
+***نائب مسؤول الدورة : ${deputyMention}***
 
-*** نائب مسؤول الدورة  : ${deputyMention}        *** 
+***التوقيع واعتماد : ( ${managerMention} )***
 
-***التوقيع واعتماد :  ( ${managerMention}     )   ***
+***نسخة الى/ <@&1404535896304259072>***
 
-***نسخة الى/ <@&1404535896304259072> ***
-***للمتابعة والتنفيذ :  <@&1404535896044343488>  ***
-***للعلم و الاحاطة :  <@&1404535897487179858>    ***`;
+***للمتابعة والتنفيذ : <@&1404535896044343488>***
 
-        outputDiv.innerText = clicheText;
+***للعلم والاحاطة : <@&1404535897487179858>***`;
+
+
+        outputDiv.innerText =
+            clicheText;
+
     }
 
-    function copyCliche() {
-        const text = document.getElementById('adminOutput').innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            alert("✅ تم نسخ الكليشة بنجاح! يمكنك لصقها الآن بـ ديسكورد.");
-        });
+
+    /* =========================================================
+       نسخ الكليشة
+    ========================================================= */
+
+    async function copyCliche() {
+
+        const text =
+            document
+                .getElementById("adminOutput")
+                .innerText;
+
+
+        if (!text || text.includes("لا توجد نتائج")) {
+
+            alert(
+                "لا توجد كليشة لنسخها."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            await navigator.clipboard.writeText(text);
+
+            alert(
+                "✅ تم نسخ الكليشة بنجاح! يمكنك لصقها الآن في ديسكورد."
+            );
+
+        } catch (err) {
+
+            /*
+             * طريقة بديلة إذا كان clipboard
+             * غير متاح.
+             */
+            const textarea =
+                document.createElement("textarea");
+
+            textarea.value = text;
+
+            document.body.appendChild(
+                textarea
+            );
+
+            textarea.select();
+
+            document.execCommand("copy");
+
+            textarea.remove();
+
+
+            alert(
+                "✅ تم نسخ الكليشة بنجاح."
+            );
+        }
+
     }
+
+
+    /* =========================================================
+       حذف النتائج
+    ========================================================= */
 
     function clearCloudData() {
-        if (confirm("هل أنت تأكد من مسح جميع نتائج الفنيين من السحابة؟")) {
-            database.ref('results').remove().then(() => {
-                alert("تم مسح السجلات بنجاح.");
-            });
+
+        const confirmation =
+            confirm(
+                "⚠️ هل أنت متأكد من مسح جميع نتائج الفنيين من السحابة؟\n\nلا يمكن التراجع عن هذه العملية."
+            );
+
+
+        if (!confirmation) {
+            return;
         }
+
+
+        const secondConfirmation =
+            confirm(
+                "تأكيد أخير:\nسيتم حذف جميع النتائج لجميع الدورات."
+            );
+
+
+        if (!secondConfirmation) {
+            return;
+        }
+
+
+        database
+            .ref("results")
+            .remove()
+            .then(() => {
+
+                alert(
+                    "✅ تم مسح جميع السجلات بنجاح."
+                );
+
+            })
+            .catch(err => {
+
+                alert(
+                    "حدث خطأ أثناء الحذف: " +
+                    err.message
+                );
+
+            });
+
     }
+
+
+    /* =========================================================
+       إغلاق النوافذ عند الضغط خارجها
+    ========================================================= */
+
+    window.addEventListener(
+        "click",
+        function(event) {
+
+            const helpModal =
+                document.getElementById(
+                    "helpModal"
+                );
+
+
+            const adminModal =
+                document.getElementById(
+                    "adminModal"
+                );
+
+
+            if (event.target === helpModal) {
+
+                helpModal.style.display =
+                    "none";
+
+            }
+
+
+            if (event.target === adminModal) {
+
+                adminModal.style.display =
+                    "none";
+
+            }
+
+        }
+    );
+
+
+    /* =========================================================
+       زر Enter في تسجيل دخول المشرف
+    ========================================================= */
+
+    document
+        .getElementById("adminPass")
+        .addEventListener(
+            "keydown",
+            function(event) {
+
+                if (event.key === "Enter") {
+                    verifyAdmin();
+                }
+
+            }
+        );
+
 </script>
 
 </body>
