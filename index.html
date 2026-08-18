@@ -534,21 +534,22 @@
 
         examData.questions.forEach((q, index) => {
             const inputs = document.querySelectorAll(`input[name="q_${index}"]:checked`);
+            
             if (q.multi) {
-                let userAnswers = Array.from(inputs).map(i => parseInt(i.value)).sort();
-                let correctAnswers = q.a.slice().sort();
-                if (JSON.stringify(userAnswers) === JSON.stringify(correctAnswers)) {
+                let userAnswers = Array.from(inputs).map(i => parseInt(i.value)).sort((a,b) => a - b);
+                let correctAnswers = Array.isArray(q.a) ? q.a.slice().sort((a,b) => a - b) : [q.a];
+                
+                if (userAnswers.length === correctAnswers.length && userAnswers.every((val, idx) => val === correctAnswers[idx])) {
                     score++;
                 }
             } else {
-                if (inputs.length > 0 && parseInt(inputs[0].value) === q.a) {
+                if (inputs.length > 0 && parseInt(inputs[0].value) === Number(q.a)) {
                     score++;
                 }
             }
         });
 
         const totalQuestions = examData.questions.length;
-        const scaledScore = (totalQuestions === 10) ? score : Math.round((score / totalQuestions) * 10);
 
         const resultKey = btoa(unescape(encodeURIComponent(currentDiscordId + "_" + activeExamKey)))
             .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -561,10 +562,8 @@
             discordId: currentDiscordId,
             courseKey: activeExamKey,
             courseTitle: examData.title,
-            score: scaledScore,
-            maxScore: 10,
-            rawScore: score,
-            rawMaxScore: totalQuestions,
+            score: score,
+            maxScore: totalQuestions,
             timestamp: new Date(submittedAt).toLocaleString('ar-SA'),
             submittedAt: submittedAt,
             expiresAt: expiresAt
