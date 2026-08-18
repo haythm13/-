@@ -554,6 +554,10 @@
          */
         const resultKey = btoa(unescape(encodeURIComponent(currentDiscordId + "_" + activeExamKey)))
             .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+        // تأكيد الدرجة حسب عدد الإجابات الصحيحة الفعلي.
+        // في التصنيع: 10 إجابات صحيحة = 10/10 وليس 8/10.
+        const finalScore = Math.max(0, Math.min(score, examData.questions.length));
+
         const resultRef = database.ref('results/' + resultKey);
         const submittedAt = Date.now();
         const expiresAt = submittedAt + (60 * 60 * 1000);
@@ -562,7 +566,7 @@
             discordId: currentDiscordId,
             courseKey: activeExamKey,
             courseTitle: examData.title,
-            score: score,
+            score: finalScore,
             maxScore: examData.questions.length,
             timestamp: new Date(submittedAt).toLocaleString('ar-SA'),
             submittedAt: submittedAt,
