@@ -547,16 +547,12 @@
             }
         });
 
-        /*
-         * حفظ نتيجة واحدة فقط لكل فني في كل دورة.
-         * إعادة الاختبار تحدث نفس السجل بدل إنشاء نتيجة جديدة.
-         * النتيجة تبقى متاحة للمشرف لمدة ساعة من وقت التسليم.
-         */
+        const totalQuestions = examData.questions.length;
+        // حساب الدرجة كنسبة مئوية محولة لمعيار من 10 لجميع الاختبارات بشكل موحد
+        const scaledScore = Math.round((score / totalQuestions) * 10);
+
         const resultKey = btoa(unescape(encodeURIComponent(currentDiscordId + "_" + activeExamKey)))
             .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-        // تأكيد الدرجة حسب عدد الإجابات الصحيحة الفعلي.
-        // في التصنيع: 10 إجابات صحيحة = 10/10 وليس 8/10.
-        const finalScore = Math.max(0, Math.min(score, examData.questions.length));
 
         const resultRef = database.ref('results/' + resultKey);
         const submittedAt = Date.now();
@@ -566,13 +562,14 @@
             discordId: currentDiscordId,
             courseKey: activeExamKey,
             courseTitle: examData.title,
-            score: finalScore,
-            maxScore: examData.questions.length,
+            score: scaledScore,
+            maxScore: 10,
+            rawScore: score,
+            rawMaxScore: totalQuestions,
             timestamp: new Date(submittedAt).toLocaleString('ar-SA'),
             submittedAt: submittedAt,
             expiresAt: expiresAt
         }).then(() => {
-            // حذف تلقائي بعد ساعة إذا كانت الصفحة مفتوحة.
             setTimeout(() => {
                 resultRef.remove().catch(() => {});
             }, 60 * 60 * 1000);
@@ -606,7 +603,6 @@
     }
 
     function listenToCloudResults() {
-        // تنظيف النتائج التي انتهت مدتها قبل عرضها للمشرف.
         cleanupExpiredResults().then(() => {
             database.ref('results').on('value', (snapshot) => {
                 const data = snapshot.val() || {};
@@ -615,9 +611,6 @@
 
                 Object.keys(data).forEach((key) => {
                     const item = data[key];
-
-                    // دعم السجلات القديمة التي لا تحتوي على expiresAt:
-                    // لا نحذفها مباشرة، لكن أي نتيجة جديدة ستكون لمدة ساعة.
                     if (!item.expiresAt || item.expiresAt > now) {
                         validResults[key] = item;
                     } else {
@@ -653,7 +646,6 @@
         const selectedCourseKey = document.getElementById('adminFilterCourse').value;
         const courseNum = document.getElementById('courseNumberInput').value.trim() || "1";
         
-        // جلب قيم أيدي الإشراف من الخانات
         const sharhId = document.getElementById('sharhInput').value.trim();
         const managerId = document.getElementById('managerInput').value.trim();
         const deputyId = document.getElementById('deputyInput').value.trim();
@@ -674,24 +666,25 @@
         let grade07 = [];
 
         Object.values(rawCloudData).forEach((item) => {
-            // لا تعرض للمشرف أي نتيجة انتهت ساعتها.
             if (item.expiresAt && item.expiresAt <= Date.now()) return;
 
             tableBody.innerHTML += `
                 <tr>
                     <td><@${item.discordId}></td>
                     <td>${item.courseTitle}</td>
-                    <td>${item.score} / ${item.maxScore}</td>
+                    <td>${item.score} / ${item.maxScore || 10}</td>
                     <td>${item.timestamp}</td>
                 </tr>
             `;
 
             if (item.courseKey === selectedCourseKey || item.courseTitle === currentExamData.title) {
                 const mention = `<@${item.discordId}>`;
-                if (item.score === 10) grade10.push(mention);
-                else if (item.score === 9) grade09.push(mention);
-                else if (item.score === 8) grade08.push(mention);
-                else if (item.score === 7) grade07.push(mention);
+                const finalScore = Number(item.score);
+
+                if (finalScore === 10) grade10.push(mention);
+                else if (finalScore === 9) grade09.push(mention);
+                else if (finalScore === 8) grade08.push(mention);
+                else if (finalScore === 7) grade07.push(mention);
             }
         });
 
@@ -700,7 +693,6 @@
         const str08 = grade08.length > 0 ? grade08.join(" , ") : "لا يوجد";
         const str07 = grade07.length > 0 ? grade07.join(" , ") : "لا يوجد";
 
-        // تنسيق قيم الإشراف للكليشة
         const sharhMention = sharhId ? `<@${sharhId}>` : "";
         const managerMention = managerId ? `<@${managerId}>` : "";
         const deputyMention = deputyId ? `<@${deputyId}>` : "";
@@ -753,7 +745,7 @@
 ***التوقيع واعتماد :  ( ${managerMention}     )   ***
 
 ***نسخة الى/ <@&1404535896304259072> ***
-***للمتابعة والتنفيذ :  <@&1404535896044343488>  ***
+***ل للمتابعة والتنفيذ :  <@&1404535896044343488>  ***
 ***للعلم و الاحاطة :  <@&1404535897487179858>    ***`;
 
         outputDiv.innerText = clicheText;
